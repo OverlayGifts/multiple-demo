@@ -157,10 +157,23 @@
         videos.forEach(video => video.pause());
       };
 
+      // Function to handle autoplay
+      const playVideoWithAutoplay = (video) => {
+        // Force play using promise
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.log('Autoplay prevented:', error);
+            video.muted = true; // Mute the video to force autoplay
+            video.play(); // Try again with muted video
+          });
+        }
+      };
+
       targets.forEach((target, index) => {
         target.addEventListener('mindar-image-target-visible', () => {
           pauseAllVideos(); // Pause other videos
-          videos[index].play(); // Play the respective video
+          playVideoWithAutoplay(videos[index]); // Play the respective video
         });
 
         target.addEventListener('mindar-image-target-invisible', () => {
