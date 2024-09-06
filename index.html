@@ -1,9 +1,15 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
+    <title>Multiple Target Video Playback with MindAR and A-Frame</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- A-Frame Library -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- MindAR for A-Frame -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
+      /* Play/Pause Button Container */
       #playPauseButtonContainer {
         position: absolute;
         top: 20px;
@@ -12,6 +18,7 @@
         z-index: 999;
       }
 
+      /* Play/Pause Button Styling */
       #playPauseButton {
         width: 50px;
         height: 50px;
@@ -21,23 +28,27 @@
         border-radius: 30%;
         cursor: pointer;
         outline: none;
+        transition: background-image 0.3s ease;
       }
 
+      /* Hover Effect for Play/Pause Button */
       #playPauseButton:hover {
         background-color: rgba(0, 0, 0, 0.3);
       }
 
+      /* Play/Pause Button Text */
       #playPauseText {
         margin-top: 5px;
         font-size: 14px;
         color: #ffffff;
       }
 
+      /* Custom Transparent Button */
       #customButton {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        background-color: transparent;
+        background-color: transparent; /* Make background transparent */
         color: white;
         padding: 10px 20px;
         border: none;
@@ -45,17 +56,27 @@
         z-index: 1000;
       }
 
+      /* Hover Effect for Custom Button */
       #customButton:hover {
-        text-decoration: underline;
+        text-decoration: underline; /* Optional hover effect */
       }
 
       /* Hide the VR button */
       .a-enter-vr-button {
         display: none !important;
       }
+
+      /* Optional: Fullscreen Styling */
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: #000;
+      }
     </style>
   </head>
   <body>
+    <!-- A-Frame Scene with MindAR Integration -->
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind"
       color-space="sRGB"
@@ -63,17 +84,20 @@
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false">
 
+      <!-- Asset Management: Loading Videos -->
       <a-assets>
-        <!-- 5 different videos for the 5 targets -->
-        <video id="video1" src="./vid1.mp4" playsinline muted loop></video>
-        <video id="video2" src="./vid2.mp4" playsinline muted loop></video>
-        <video id="video3" src="./vid3.mp4" playsinline muted loop></video>
-        <video id="video4" src="./vid4.mp4" playsinline muted loop></video>
-        <video id="video5" src="./vid5.mp4" playsinline muted loop></video>
+        <!-- 5 Different Videos for 5 Targets -->
+        <video id="video1" src="./vid1.mp4" playsinline muted loop crossorigin="anonymous"></video>
+        <video id="video2" src="./vid2.mp4" playsinline muted loop crossorigin="anonymous"></video>
+        <video id="video3" src="./vid3.mp4" playsinline muted loop crossorigin="anonymous"></video>
+        <video id="video4" src="./vid4.mp4" playsinline muted loop crossorigin="anonymous"></video>
+        <video id="video5" src="./vid5.mp4" playsinline muted loop crossorigin="anonymous"></video>
       </a-assets>
 
+      <!-- Camera Setup -->
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+      <!-- Define 5 Image Targets with Respective Videos -->
       <!-- Target 0 -->
       <a-entity id="target1" mindar-image-target="targetIndex: 0">
         <a-plane
@@ -135,49 +159,117 @@
       </a-entity>
     </a-scene>
 
+    <!-- Play/Pause Button Container -->
+    <div id="playPauseButtonContainer">
+      <button id="playPauseButton"></button>
+      <div id="playPauseText">Enable Sound</div>
+    </div>
+
+    <!-- Custom Transparent Button -->
+    <button id="customButton" onclick="window.location.href='https://www.overlay-ai.com';">DEMO APP</button>
+
     <script>
-      const videos = [
-        document.querySelector('#video1'),
-        document.querySelector('#video2'),
-        document.querySelector('#video3'),
-        document.querySelector('#video4'),
-        document.querySelector('#video5')
-      ];
+      document.addEventListener('DOMContentLoaded', () => {
+        // Select all video elements
+        const videos = [
+          document.querySelector('#video1'),
+          document.querySelector('#video2'),
+          document.querySelector('#video3'),
+          document.querySelector('#video4'),
+          document.querySelector('#video5')
+        ];
 
-      const targets = [
-        document.querySelector('#target1'),
-        document.querySelector('#target2'),
-        document.querySelector('#target3'),
-        document.querySelector('#target4'),
-        document.querySelector('#target5')
-      ];
+        // Select all target entities
+        const targets = [
+          document.querySelector('#target1'),
+          document.querySelector('#target2'),
+          document.querySelector('#target3'),
+          document.querySelector('#target4'),
+          document.querySelector('#target5')
+        ];
 
-      // Function to pause all videos
-      const pauseAllVideos = () => {
-        videos.forEach(video => video.pause());
-      };
-
-      // Function to handle autoplay
-      const playVideoWithAutoplay = (video) => {
-        // Force play using promise
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.log('Autoplay prevented:', error);
-            video.muted = true; // Mute the video to force autoplay
-            video.play(); // Try again with muted video
-          });
-        }
-      };
-
-      targets.forEach((target, index) => {
-        target.addEventListener('mindar-image-target-visible', () => {
-          pauseAllVideos(); // Pause other videos
-          playVideoWithAutoplay(videos[index]); // Play the respective video
+        // Initially, ensure all videos are paused and muted
+        videos.forEach(video => {
+          video.pause();
+          video.muted = true;
         });
 
-        target.addEventListener('mindar-image-target-invisible', () => {
-          videos[index].pause(); // Pause the video when target is not visible
+        // Play/Pause Button Elements
+        const playPauseButton = document.querySelector('#playPauseButton');
+        const playPauseText = document.querySelector('#playPauseText');
+
+        // State to track if sound is enabled
+        let soundEnabled = false;
+
+        // Play/Pause Button Event Listener
+        playPauseButton.addEventListener('click', () => {
+          soundEnabled = !soundEnabled;
+          if (soundEnabled) {
+            // Unmute all videos to allow sound
+            videos.forEach(video => {
+              video.muted = false;
+            });
+            playPauseText.textContent = 'Sound Enabled';
+            // Change button icon to indicate sound is enabled (optional)
+            playPauseButton.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/109/109196.png')"; // Pause icon
+          } else {
+            // Mute all videos and pause them
+            videos.forEach(video => {
+              video.muted = true;
+              video.pause();
+            });
+            playPauseText.textContent = 'Enable Sound';
+            // Change button icon to indicate sound is disabled (optional)
+            playPauseButton.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/109/109197.png')"; // Play icon
+          }
+        });
+
+        /**
+         * Function to pause all videos except the one at the specified index
+         * @param {number} indexToPlay - Index of the video to play
+         */
+        const pauseAllExcept = (indexToPlay) => {
+          videos.forEach((video, index) => {
+            if (index !== indexToPlay) {
+              video.pause();
+            }
+          });
+        };
+
+        // Attach event listeners to each target for visibility changes
+        targets.forEach((target, index) => {
+          // When the target becomes visible
+          target.addEventListener('mindar-image-target-visible', () => {
+            if (soundEnabled) {
+              // Pause all other videos
+              pauseAllExcept(index);
+              // Play the respective video
+              videos[index].play().catch(error => {
+                console.error(`Error playing video${index + 1}:`, error);
+              });
+            } else {
+              // Play muted if sound is not enabled (optional)
+              pauseAllExcept(index);
+              videos[index].play().catch(error => {
+                console.error(`Error playing video${index + 1}:`, error);
+              });
+            }
+          });
+
+          // When the target becomes invisible
+          target.addEventListener('mindar-image-target-invisible', () => {
+            videos[index].pause();
+          });
+        });
+
+        // Optional: Handle scene loading errors
+        const scene = document.querySelector('a-scene');
+        scene.addEventListener('loaded', () => {
+          console.log('A-Frame scene loaded successfully.');
+        });
+
+        scene.addEventListener('error', (e) => {
+          console.error('A-Frame scene error:', e);
         });
       });
     </script>
